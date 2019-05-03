@@ -5,6 +5,10 @@ VisualStudioVersion = 15.0.28307.421
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BigIntConsoleTest", "BigIntConsoleTest\BigIntConsoleTest.csproj", "{7C61C08B-DE4E-4A56-BA0A-D3DA6AFCD162}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BigIntLibrary", "BigIntLibrary\BigIntLibrary.csproj", "{51665A24-AB24-48D1-B4A0-37A7A13E4E63}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BigIntFormTest", "BigIntFormTest\BigIntFormTest.csproj", "{8B3ED9F6-3561-42CA-95E9-6AD67A1E9651}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{7C61C08B-DE4E-4A56-BA0A-D3DA6AFCD162}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C61C08B-DE4E-4A56-BA0A-D3DA6AFCD162}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7C61C08B-DE4E-4A56-BA0A-D3DA6AFCD162}.Release|Any CPU.Build.0 = Release|Any CPU
+		{51665A24-AB24-48D1-B4A0-37A7A13E4E63}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51665A24-AB24-48D1-B4A0-37A7A13E4E63}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51665A24-AB24-48D1-B4A0-37A7A13E4E63}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51665A24-AB24-48D1-B4A0-37A7A13E4E63}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B3ED9F6-3561-42CA-95E9-6AD67A1E9651}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B3ED9F6-3561-42CA-95E9-6AD67A1E9651}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B3ED9F6-3561-42CA-95E9-6AD67A1E9651}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B3ED9F6-3561-42CA-95E9-6AD67A1E9651}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
