@@ -26,11 +26,20 @@ namespace BigIntLibrary
         }
         #endregion
 
-        #region Добавление
+        #region Добавление и Вычитание
 
-        #endregion
+        BigInt SignOp(BigInt a,BigInt b)
+        {
 
-        #region Вычитание
+        }
+
+        BigInt DiffSignOp(BigInt a,BigInt b)
+        {
+
+        }
+       
+
+        
 
         #endregion
 
@@ -104,7 +113,7 @@ namespace BigIntLibrary
 
         public string DebugString()
         {
-            string res = string.Empty;
+            string res = size + "; ";
             for (int i = size - 1; i > -1; i--)
             {
                 res += value[i];
