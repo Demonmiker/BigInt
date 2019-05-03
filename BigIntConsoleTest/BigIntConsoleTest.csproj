@@ -49,5 +49,11 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BigIntLibrary\BigIntLibrary.csproj">
+      <Project>{51665a24-ab24-48d1-b4a0-37a7a13e4e63}</Project>
+      <Name>BigIntLibrary</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

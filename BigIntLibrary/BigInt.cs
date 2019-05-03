@@ -12,7 +12,11 @@ namespace BigIntLibrary
         #region Структура
         int size;
 
-        List<uint> value; // значения (лимбы)
+        bool sign;
+
+        // base = uint.MaxValue + 1;
+
+        List<uint> value = new List<uint>(); // значения (лимбы)
 
         //int memory; можно создать свойство указывающее а value.Lenght
         #endregion
@@ -21,6 +25,7 @@ namespace BigIntLibrary
         public BigInt()
         {
             size = 1;
+            
             value.Add(0u);
 
         }
@@ -28,14 +33,29 @@ namespace BigIntLibrary
 
         #region Добавление и Вычитание
 
-        BigInt SignOp(BigInt a,BigInt b)
+        //УБРАТЬ ПАБЛИК ПОЗЖЕ
+        public static BigInt SignOp(BigInt a,BigInt b,bool sign) // true если позитив
         {
-
+            if (a.size < b.size) Swap(a, b);
+            uint carry = 0;// флаг переноса
+            BigInt c = new BigInt();
+            
+            for(int i=0;i<a.size-1;i++)  
+                c.value.Add(0u);
+            for (int i = 0; i < b.size ; i++)
+            {
+                c.value[i] = a.value[i] + b.value[i] + carry;
+                carry = ((a.value[i] & b.value[i]) | ((a.value[i] | b.value[i]) & (~c.value[i]))) >> 31;
+            }
+            if (carry == 1)
+            { c.value.Add(1u); c.size++; }
+            return c;
         }
 
-        BigInt DiffSignOp(BigInt a,BigInt b)
+        //УБРАТЬ ПАБЛИК ПОЗЖЕ
+        public static BigInt DiffSignOp(BigInt a,BigInt b)
         {
-
+            return new BigInt();
         }
        
 
@@ -151,9 +171,18 @@ namespace BigIntLibrary
 
         }
 
-      
 
 
+
+        #endregion
+
+        #region Другое
+        public static void Swap<T>(T a,T b)
+        {
+            T buf = a;
+            a = b;
+            b = buf;
+        }
         #endregion
     }
 }
