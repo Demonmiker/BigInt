@@ -103,22 +103,62 @@ namespace BigIntLibrary
         #region Умножение
 
         //УБРАТЬ PUBLIC
-        public static uint MulN1(BigInt u,uint v,out BigInt z)
+        public static uint MulN1(BigInt u,uint v,out BigInt z,ulong s = 0ul)
         {
             z = new BigInt();
-            ulong s = 0;
+            z.Resize(u.size);
             for (int i = 0; i < u.size; i++)
             {
                 s += (ulong)u.value[i] * v;
-                u.value[i] = (uint)s;
+                z.value[i] = (uint)s;
                 s >>= 32;
             }
             return (uint)s;
         }
+
+        void Shift(uint a)
+        {
+            this.value.Insert(0, 0u);
+            this.size++;
+        }
+
+        public static uint Mul_MN(BigInt u,BigInt v,out BigInt z)
+        {
+            uint s = BigInt.MulN1(u, v.value[0], out z, 0);
+            BigInt buf;
+            for(int i=1;i<v.size;i++)
+            {
+                s = BigInt.MulN1(u, v.value[i], out buf, s);
+                z = BigInt.SignOp(z, buf);
+            }
+            return s;
+        }
+
+        public static BigInt Mul(BigInt u,BigInt v)
+        {
+            uint carry = BigInt.Mul_MN(u, v, out BigInt z);
+            if (carry != 0) { z.value.Add(carry); z.size++; }
+            return z;
+        }
         #endregion
 
         #region Деление
-
+        public static long ModulusOnShort(BigInt a,uint b)
+        {
+            if (a.size == 1 && a.value[0]==0)
+                return -1;
+            long carry = 0;
+            for (int i = (int)a.size - 1; i >= 0; --i)
+            {
+                long cur = a.value[i] + carry * (uint.MaxValue + 1l);
+                a.value[i] = (uint)(cur / b);
+                carry = (long)(cur % b);
+            }
+            //
+            while (a.size > 1 && a.value[a.value.Count - 1] == 0)
+            { a.value.RemoveAt(a.value.Count - 1); a.size--; }
+            return carry;
+        }
         #endregion
 
         #region Сравнение итд
@@ -178,7 +218,20 @@ namespace BigIntLibrary
         #region Перевод в другие типы
         public override string ToString()
         {
-            return base.ToString();
+            BigInt buf = this.Clone() as BigInt;
+            StringBuilder sb = new StringBuilder(string.Empty);
+            long mod = BigInt.ModulusOnShort(buf, 10);
+            do
+            {
+                
+                sb.Append(mod);
+                mod = BigInt.ModulusOnShort(buf, 10);
+            }
+            while (mod != -1);
+            StringBuilder Out = new StringBuilder();
+            for (int i = sb.Length-1; i > -1; i--)
+                Out.Append(sb[i]);
+            return Out.ToString();
         }
 
         public string DebugString()
@@ -239,12 +292,20 @@ namespace BigIntLibrary
             BigInt A = new BigInt();
             A.sign = this.sign;
             A.size = this.size;
+            A.value.Clear();
             foreach (uint a in this.value)
                 A.value.Add(a);
             return A as object;
         }
 
-
+        private void Resize(int Newsize)
+        {
+            this.size = Newsize;
+            for (int i = 1; i < Newsize; i++)
+            {
+                this.value.Add(0u);
+            }
+        }
         #endregion
     }
 }
