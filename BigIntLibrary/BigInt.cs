@@ -7,7 +7,7 @@ using static System.Math;
 
 namespace BigIntLibrary
 {
-    public class BigInt : IComparable<BigInt>
+    public class BigInt : IComparable<BigInt> , ICloneable
     {
         #region Структура
         int size;
@@ -47,12 +47,19 @@ namespace BigIntLibrary
             uint carry = 0;// флаг переноса
             BigInt c = new BigInt();
             
-            for(int i=0;i<a.size-1;i++)  
+            for(int j=0;j<a.size-1;j++)  
                 c.value.Add(0u);
-            for (int i = 0; i < b.size ; i++)
+            c.size = c.value.Count;
+            int i = 0;
+            for (i = 0; i < b.size ; i++)
             {
                 c.value[i] = a.value[i] + b.value[i] + carry;
                 carry = ((a.value[i] & b.value[i]) | ((a.value[i] | b.value[i]) & (~c.value[i]))) >> 31;
+            }
+            for (i = i; i < a.size; i++)
+            {
+                c.value[i] = a.value[i] + carry;
+                carry = ((a.value[i] & 0u) | ((a.value[i] | 0u) & (~c.value[i]))) >> 31;
             }
             if (carry == 1)
             { c.value.Add(1u); c.size++; }
@@ -71,12 +78,19 @@ namespace BigIntLibrary
             if (a.size < b.size) Swap(a, b);
             uint borrow = 0;// флаг переноса
             BigInt c = new BigInt();
-            for (int i = 0; i < a.size - 1; i++)
+            for (int j = 0; j < a.size - 1; j++)
                 c.value.Add(0u);
-            for (int i = 0; i < b.size; i++)
+            c.size = c.value.Count;
+            int i;
+            for (i = 0; i < b.size; i++)
             {
                 c.value[i] = a.value[i] - b.value[i] - borrow;
                 borrow = ((~a.value[i] & b.value[i]) | ((~a.value[i] | b.value[i]) & c.value[i])) >> 31;
+            }
+            for (i = i; i < a.size; i++)
+            {
+                c.value[i] = a.value[i] - borrow;
+                borrow = ((~a.value[i] & 0u) | ((~a.value[i] | 0u) & c.value[i])) >> 31;
             }
             return c;
         }
@@ -88,6 +102,19 @@ namespace BigIntLibrary
 
         #region Умножение
 
+        //УБРАТЬ PUBLIC
+        public static uint MulN1(BigInt u,uint v,out BigInt z)
+        {
+            z = new BigInt();
+            ulong s = 0;
+            for (int i = 0; i < u.size; i++)
+            {
+                s += (ulong)u.value[i] * v;
+                u.value[i] = (uint)s;
+                s >>= 32;
+            }
+            return (uint)s;
+        }
         #endregion
 
         #region Деление
@@ -161,7 +188,7 @@ namespace BigIntLibrary
             {
                 res += value[i];
                 if (i != 0)
-                    res += " , ";
+                    res += "\t";
             }
             return res; 
             
@@ -206,6 +233,18 @@ namespace BigIntLibrary
             a = b;
             b = buf;
         }
+
+        public object Clone()
+        {
+            BigInt A = new BigInt();
+            A.sign = this.sign;
+            A.size = this.size;
+            foreach (uint a in this.value)
+                A.value.Add(a);
+            return A as object;
+        }
+
+
         #endregion
     }
 }

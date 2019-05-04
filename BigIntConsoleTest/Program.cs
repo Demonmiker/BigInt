@@ -5,12 +5,31 @@ using System.Text;
 using System.Threading.Tasks;
 using BigIntLibrary;
 using static System.Console;
+using System.Numerics;
 
 namespace BigIntConsoleTest
 {
     class Program
     {
         static void Main(string[] args)
+        {
+            Console.WindowWidth = 180;
+            BigInt A = new BigInt();
+            BigInt B = new BigInt();
+            A.Set(uint.MaxValue);
+            B.Set(1);
+            A = BigInt.SignOp(A,B);
+            
+            for (int i=0;i<1000000;i++)
+            {
+                A = BigInt.SignOp(A, A);
+                WriteLine(A.DebugString());
+                ReadKey();
+            }
+            
+        }
+
+        static void test1()
         {
             Write("num:");
             BigInt A = new BigInt(), B = new BigInt();
