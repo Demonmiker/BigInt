@@ -19,11 +19,14 @@ namespace BigIntConsoleTest
             uint b;
             do
             {
+                bool plus = true;
+                Write("op:");
+                plus = ReadLine() == "+" ? true : false;
                 Write("num2:");
                 b = uint.Parse(ReadLine());
                 B.Set(b);
                 WriteLine("B -- " + B.DebugString());
-                A = BigInt.SignOp(A, B, true);
+                A = plus ? BigInt.SignOp(A, B) : BigInt.DiffSignOp(A, B);
                 WriteLine("A -- " + A.DebugString());
             }
             while (b != 0)

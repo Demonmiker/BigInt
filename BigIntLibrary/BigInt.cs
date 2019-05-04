@@ -34,7 +34,14 @@ namespace BigIntLibrary
         #region Добавление и Вычитание
 
         //УБРАТЬ ПАБЛИК ПОЗЖЕ
-        public static BigInt SignOp(BigInt a,BigInt b,bool sign) // true если позитив
+        /// <summary>
+        /// операция на одинаковые знвки
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <param name="sign"></param>
+        /// <returns></returns>
+        public static BigInt SignOp(BigInt a,BigInt b) // true если позитив
         {
             if (a.size < b.size) Swap(a, b);
             uint carry = 0;// флаг переноса
@@ -53,9 +60,25 @@ namespace BigIntLibrary
         }
 
         //УБРАТЬ ПАБЛИК ПОЗЖЕ
+        /// <summary>
+        /// Операция на разные знаки
+        /// </summary>
+        /// <param name="a">первое число</param>
+        /// <param name="b">второе число</param>
+        /// <returns></returns>
         public static BigInt DiffSignOp(BigInt a,BigInt b)
         {
-            return new BigInt();
+            if (a.size < b.size) Swap(a, b);
+            uint borrow = 0;// флаг переноса
+            BigInt c = new BigInt();
+            for (int i = 0; i < a.size - 1; i++)
+                c.value.Add(0u);
+            for (int i = 0; i < b.size; i++)
+            {
+                c.value[i] = a.value[i] - b.value[i] - borrow;
+                borrow = ((~a.value[i] & b.value[i]) | ((~a.value[i] | b.value[i]) & c.value[i])) >> 31;
+            }
+            return c;
         }
        
 
