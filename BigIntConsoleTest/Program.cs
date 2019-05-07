@@ -13,7 +13,12 @@ namespace BigIntConsoleTest
     {
         static void Main(string[] args)
         {
-            OutputTest();
+            //BigInt a = new BigInt(); BigInt r = new BigInt();
+            //a = BigInt.Parse("4294967296");
+            //BigInt.MulN1(a, 1u, out r);
+            //return;
+            WindowWidth = 105;
+            Test();
         }
 
         static void OutputTest()
@@ -24,6 +29,69 @@ namespace BigIntConsoleTest
             A = BigInt.SignOp(A, B);
             WriteLine(A);
             ReadKey();
+        }
+
+        static void MulFix()
+        {
+            BigInt a = new BigInt();
+            a = BigInt.Parse("4294967296");
+            WriteLine(a.DebugString());
+            a = BigInt.Mul(a, a);
+            WriteLine(a);
+            ReadKey();
+        }
+        static void Test()
+        {
+            for (int i = 0; i < 10000; i++)
+            {
+
+                WriteLine(i);
+                string s = ReadLine();
+                BigInteger b = BigInteger.Parse(s);
+                string n = b.ToString();
+                BigInt v = BigInt.Parse(s);
+                string m = v.ToString();
+
+
+                string q = ReadLine();
+                BigInteger d = BigInteger.Parse(q);
+                string f = d.ToString();
+                BigInt g = BigInt.Parse(q);
+                string h = g.ToString();
+
+                BigInt O = new BigInt();
+                O = BigInt.Mul(v, g);
+
+                BigInteger P = new BigInteger();
+                P = b * d;
+
+                if (O.ToString() != P.ToString())
+                {
+                    WriteLine(O);
+                    WriteLine(P);
+                    ReadKey();
+
+                }
+
+            }
+            ReadKey();
+
+        }
+
+        static string GenerateNum(int Length)
+        {
+            string chars = "0123456789"; int pos = 0;
+            Random rnd = new Random();
+            StringBuilder s = new StringBuilder(Length - 1);
+            for (int i = 0; i < Length; i++)
+            {
+                pos = rnd.Next(0, 10);
+                s.Append(chars[pos]);
+
+
+            }
+            return s.ToString();
+
         }
 
         static void Mod10Test()
@@ -44,10 +112,10 @@ namespace BigIntConsoleTest
 
         static void MulTest1()
         {
-            BigInt A = new BigInt(); BigInt B = new BigInt(); 
+            BigInt A = new BigInt(); BigInt B = new BigInt();
             A.Set(uint.Parse(ReadLine()));
             B.Set(uint.Parse(ReadLine()));
-            A = BigInt.SignOp(A,B);
+            A = BigInt.SignOp(A, B);
             B.Set(uint.Parse(ReadLine()));
 
             //
@@ -55,7 +123,7 @@ namespace BigIntConsoleTest
 
             D = BigInt.Mul(A, B);
             WriteLine(D.DebugString());
-           
+
             ReadKey();
         }
 
