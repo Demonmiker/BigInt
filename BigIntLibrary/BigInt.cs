@@ -10,19 +10,24 @@ namespace BigIntLibrary
     public class BigInt : IComparable<BigInt>, ICloneable
     {
         #region Структура
-        int size;
+        public int size;
 
-        bool sign;
+        bool sign = false;
 
-        // base = uint.MaxValue + 1;
+        static BigInt BASE;
 
-        List<uint> value = new List<uint>(); // значения (лимбы)
-        private static int baza = 9;
+        public List<uint> value = new List<uint>(); // значения (лимбы)
 
-        //int memory; можно создать свойство указывающее а value.Lenght
+        
         #endregion
 
         #region Конструкторы
+        static BigInt()
+        {
+            BASE = new BigInt();
+            BASE.value.Add(1u);
+        }
+
         public BigInt()
         {
             size = 1;
@@ -30,23 +35,29 @@ namespace BigIntLibrary
             value.Add(0u);
 
         }
+
+        public BigInt(uint num)
+        {
+            value.Add(0u);
+            this.Set(num);
+        }
+
+   
         #endregion
 
         #region Добавление и Вычитание
 
-        //УБРАТЬ ПАБЛИК ПОЗЖЕ
         /// <summary>
-        /// операция на одинаковые знвки
+        /// операция на одинаковые знаки
         /// </summary>
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <param name="sign"></param>
         /// <returns></returns>
-        public static BigInt SignOp(BigInt a, BigInt b) // true если позитив
+        static BigInt SignOp(BigInt a, BigInt b) 
         {
-            //a = a.Clone() as BigInt;
-            //b = b.Clone() as BigInt;
-            if (a.size < b.size) Swap(ref a, ref b);
+            bool swapped = false;
+            if (a.size < b.size) { Swap(ref a, ref b);swapped = true; }
             uint carry = 0;// флаг переноса
             BigInt c = new BigInt();
 
@@ -66,21 +77,22 @@ namespace BigIntLibrary
             }
             if (carry == 1)
             { c.value.Add(1u); c.size++; }
+
+            c.sign = swapped ? b.sign : a.sign;
+            //c.Norm();
             return c;
         }
 
-        //УБРАТЬ ПАБЛИК ПОЗЖЕ
         /// <summary>
         /// Операция на разные знаки
         /// </summary>
         /// <param name="a">первое число</param>
         /// <param name="b">второе число</param>
         /// <returns></returns>
-        public static BigInt DiffSignOp(BigInt a, BigInt b)
+        static BigInt DiffSignOp(BigInt a, BigInt b)
         {
-            //a = a.Clone() as BigInt;
-            // b = b.Clone() as BigInt;
-            if (a.size < b.size) Swap(ref a, ref b);
+            bool swaped = false;
+            if (a < b) { Swap(ref a, ref b); swaped = true; }
             uint borrow = 0;// флаг переноса
             BigInt c = new BigInt();
             for (int j = 0; j < a.size - 1; j++)
@@ -97,10 +109,23 @@ namespace BigIntLibrary
                 c.value[i] = a.value[i] - borrow;
                 borrow = ((~a.value[i] & 0u) | ((~a.value[i] | 0u) & c.value[i])) >> 31;
             }
+            if (swaped)
+                c.sign = !b.sign;
+            else
+                c.sign = a.sign;
+            c.Norm();
             return c;
         }
 
+        public static BigInt operator +(BigInt a,BigInt b)
+        {
+            return a.sign == b.sign ? BigInt.SignOp(a, b) : BigInt.DiffSignOp(a, b);
+        }
 
+        public static BigInt operator -(BigInt a,BigInt b)
+        {
+            return a.sign != b.sign ? BigInt.SignOp(a, b) : BigInt.DiffSignOp(a, b);
+        }
 
 
         #endregion
@@ -125,34 +150,49 @@ namespace BigIntLibrary
         {
             for (int i = 0; i < a; i++)
             {
-                this.value.Insert(0, 0u);
-                this.size++;
+                value.Insert(0,0u);
+                size++;
             }
 
+           
+
+        }
+
+        public static BigInt MulTry(BigInt u,BigInt v)
+        {
+            BigInt z = new BigInt(0u); BigInt buf;
+            for (int i = 0; i < v.size; i++)
+            {
+                uint s =BigInt.MulN1(u, v.value[i], out buf, 0);
+                if (s != 0) { buf.size++; buf.value.Add(s); }
+                buf.Shift(i);
+                z = BigInt.SignOp(z, buf);
+            }
+            return z;
         }
 
         public static uint Mul_MN(BigInt u, BigInt v, out BigInt z)
         {
-            uint s = BigInt.MulN1(u, v.value[0], out z, 0);
+            uint s = BigInt.MulN1(u, v.value[0], out z);
             BigInt buf;
             for (int i = 1; i < v.size; i++)
             {
-                s = BigInt.MulN1(u, v.value[i], out buf, s);
+
+                s = BigInt.MulN1(u, v.value[i], out buf,z.value[i]);
                 buf.Shift(i);
                 z = BigInt.SignOp(z, buf);
             }
             return s;
         }
 
+
         public static BigInt Mul(BigInt u, BigInt v)
         {
             u = u.Clone() as BigInt;
             v = v.Clone() as BigInt;
-            if (v.size > u.size)
+            if (u < v)
                 Swap(ref u, ref v);
-            uint carry = BigInt.Mul_MN(u, v, out BigInt z);
-            if (carry != 0) { z.value.Add(carry); z.size++; }
-            return z;
+            return MulTry(u, v);
         }
         #endregion
 
@@ -244,6 +284,7 @@ namespace BigIntLibrary
             }
             while (mod != -1);
             StringBuilder Out = new StringBuilder();
+            if(this.sign) Out.Append('-');
             for (int i = sb.Length - 1; i > -1; i--)
                 Out.Append(sb[i]);
             return Out.ToString();
@@ -262,10 +303,40 @@ namespace BigIntLibrary
 
         }
 
+        public static BigInt Parse(string s)
+        {
+            BigInt res = new BigInt();
+            bool neg = false;
+            if (s[0]=='-')
+            { neg = true; s = s.Substring(1); }       
+            int n = s.Length;
+            int razr = n / 9;
+            if (n % 9 != 0)
+                razr++;
+            string num;
+            BigInt x = new BigInt();  BigInt buf = new BigInt(); BigInt Base = new BigInt();
+            x.Set(1); res.Set(0); buf.Set(0); Base.Set(1000000000u);
+            for (int i = 1; i <= razr; i++)
+            {
+                n = s.Length - (i * 9);
+                if (n < 0) { num = s.Substring(0, 9 + n); }
+                else
+                    num = s.Substring(Math.Max(n, 0), 9);
+                buf.Set(uint.Parse(num));
+                buf = BigInt.Mul(buf, x);
+                res = BigInt.SignOp(res, buf);
+                x = BigInt.Mul(x, Base);
+
+            }
+            res.sign = neg;
+            res.Norm();
+            return res;
+        }
+
         public void Set(int num)
         {
             value[0] = (uint)Abs(num);
-            size = num < 0 ? -1 : 1;
+          
         }
 
         public void Set(long num)
@@ -323,27 +394,20 @@ namespace BigIntLibrary
                 this.value.Add(0u);
             }
         }
+
+        private void Norm()
+        {
+            if (value.Count == 1)
+                return;
+            while(value[value.Count - 1] == 0)
+            {
+                value.RemoveAt(value.Count - 1);
+                size--;
+            }
+          
+        }
         #endregion
 
-        public static BigInt Parse(string s)
-        {
-            int n = s.Length;
-            int razr = n / 9 + 1; string num;
-            BigInt x = new BigInt(); BigInt res = new BigInt(); BigInt buf = new BigInt(); BigInt Base = new BigInt();
-            x.Set(1); res.Set(0); buf.Set(0); Base.Set(1000000000u);
-            for (int i = 1; i <= razr; i++)
-            {
-                n = s.Length - (i * 9);
-                if (n < 0) { num = s.Substring(0, 9 + n); }
-                else
-                    num = s.Substring(Math.Max(n, 0), 9);
-                buf.Set(uint.Parse(num));
-                buf = BigInt.Mul(buf, x);
-                res = BigInt.SignOp(res, buf);
-                x = BigInt.Mul(x, Base);
-
-            }
-            return res;
-        }
+       
     }
 }
