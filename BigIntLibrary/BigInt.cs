@@ -16,6 +16,8 @@ namespace BigIntLibrary
 
         static BigInt BASE;
 
+        static ulong BASEul;
+
         public List<uint> value = new List<uint>(); // значения (лимбы)
 
         
@@ -26,6 +28,7 @@ namespace BigIntLibrary
         {
             BASE = new BigInt();
             BASE.value.Add(1u);
+            BASEul = (ulong)uint.MaxValue + 1;
         }
 
         public BigInt()
@@ -42,6 +45,7 @@ namespace BigIntLibrary
             this.Set(num);
         }
 
+       
    
         #endregion
 
@@ -152,10 +156,7 @@ namespace BigIntLibrary
             {
                 value.Insert(0,0u);
                 size++;
-            }
-
-           
-
+            } 
         }
 
         public static BigInt MulTry(BigInt u,BigInt v)
@@ -194,6 +195,8 @@ namespace BigIntLibrary
                 Swap(ref u, ref v);
             return MulTry(u, v);
         }
+
+
         #endregion
 
         #region Деление
@@ -212,6 +215,86 @@ namespace BigIntLibrary
             while (a.size > 1 && a.value[a.value.Count - 1] == 0)
             { a.value.RemoveAt(a.value.Count - 1); a.size--; }
             return carry;
+        }
+
+
+        public static BigInt DivN_1(BigInt u,uint v,out uint r)
+        {
+            uint[] ans = new uint[u.value.Count];
+            r = 0;
+            int j = u.value.Count - 1;
+            while(j>=0)
+            {
+                ulong cur = (ulong)(r) * BASEul + u.value[j];
+                ans[j] = (uint)(cur / v);
+                r = (uint)(cur % v);
+                j--;
+            }
+            BigInt res = new BigInt(); res.size = ans.Length;
+            res.value = ans.ToList();
+            return res;
+        }
+
+        public static BigInt DivUnSign(BigInt u,BigInt v,out BigInt r)
+        {
+            //Init
+            int n = v.value.Count;
+            int m = u.value.Count;
+            uint[] tempArray = new uint[m + 1];
+            tempArray[m] = 1;
+            BigInt q = new BigInt(); q.value = tempArray.ToList();
+            //Нормализация
+            uint d = (uint)(BASEul / v.value[n - 1] + 1);
+            u = BigInt.Mul(u, new BigInt(d));
+            v = BigInt.Mul(v, new BigInt(d));
+            if(u.value.Count==n+m)
+            {
+                u.value.Add(0u);
+            }
+            int j = m;
+            while(j>=0)
+            {
+                ulong cur = (ulong)(u.value[j + n]) * (ulong)(BASEul) + u.value[j + n - 1];
+                uint tempq = (uint)(cur / v.value[n - 1]);
+                uint tempr = (uint)(cur % v.value[n - 1]);
+                do
+                {
+                    if (tempq == BASEul || (ulong)tempq * (ulong)v.value[n - 2] > BASEul * (ulong)tempr + u.value[j + n - 2])
+                    {
+                        tempq--;
+                        tempr += v.value[n - 1];
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                while (tempr < BASEul);
+                BigInt u2 = new BigInt();u2.value = u.value.GetRange(j, n + 1);
+                u2 = u2 - BigInt.Mul(v, new BigInt(tempq));
+                //
+
+                //
+                for(int h = j; h < j + n; h++)
+                {
+                    if(h-j>=u2.value.Count)
+                    {
+                        u.value[h] = 0;
+                    }
+                    else
+                    {
+                        u.value[h] = u2.value[h - j];
+                    }
+                }
+                j--;
+                q.Norm();
+                r = new BigInt();
+                r.value = u.value.GetRange(0, n);
+                r = BigInt.DivN_1(r, d, out uint _R);
+                return q;
+
+            }
+
         }
         #endregion
 
@@ -273,6 +356,7 @@ namespace BigIntLibrary
         public override string ToString()
         {
             //return DebugString();
+            //this.Norm();
             BigInt buf = this.Clone() as BigInt;
             StringBuilder sb = new StringBuilder(string.Empty);
             long mod = BigInt.ModulusOnShort(buf, 10);
@@ -287,7 +371,10 @@ namespace BigIntLibrary
             if(this.sign) Out.Append('-');
             for (int i = sb.Length - 1; i > -1; i--)
                 Out.Append(sb[i]);
-            return Out.ToString();
+            if (Out.ToString() != "1-")
+                return Out.ToString();
+            else
+                return "0";
         }
 
         public string DebugString()

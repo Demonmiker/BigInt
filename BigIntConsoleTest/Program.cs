@@ -15,14 +15,54 @@ namespace BigIntConsoleTest
         {
             
             WindowWidth = 105;
-            MUL_TEST();
+            DiVN1Test();
+        }
+
+        public static void DiVN1Test()
+        {
+            Clear();
+            for (int i = 0; i < 100000; i++)
+            {
+                WriteLine(i);
+                string s1 = GenerateNum(rnd.Next(11,27 ), false);
+
+                BigInt a1 = BigInt.Parse(s1);
+                BigInteger a2 = BigInteger.Parse(s1);
+                uint b = (uint)rnd.Next(int.MinValue, int.MaxValue);
+                
+                //
+                
+                bool Error = false;
+                BigInt c1 = BigInt.DivN_1(a1, b,out uint r1);
+                BigInteger c2 = BigInteger.DivRem(a2, new BigInteger(b), out BigInteger r2);
+                if (c1.ToString() != c2.ToString())
+                    Error = true;
+                if (r1.ToString() != r2.ToString())
+                    Error = true;
+                if(Error)
+                {
+                    WriteLine($"a1 = {a1}");
+                    WriteLine($"a2 = {a2}");
+                    WriteLine($"b  = {b}");
+                    WriteLine($"b  = {b}");
+                    WriteLine($"c1 = {c1}");
+                    WriteLine($"c2 = {c2}");
+                    WriteLine($"r1 = {r1}");
+                    WriteLine($"r2 = {r2}");
+                    ReadKey();
+                    BigInt temp =  BigInt.Parse(c2.ToString());
+                    c1 = BigInt.DivN_1(a1, b,out r1);
+                    ReadKey();
+                }
+            }
+            
         }
 
         public static void MULN1Test()
         {
             for (int i = 0; i < 1000; i++)
             {
-                Clear();
+                
                 //WriteLine(i);
                 //bool Error = false;
                 string s1 = GenerateNum(rnd.Next(11, 27), false);
