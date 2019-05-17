@@ -159,6 +159,36 @@ namespace BigIntLibrary
             } 
         }
 
+        BigInt GetShift(int a)
+        {
+            BigInt b = this.Clone() as BigInt;
+            b.Shift(a);
+            return b;
+        }
+
+        public int Normalize(int num=-1)
+        {
+            if(num==-1)
+            {
+                num = 0;
+                uint dn = this.value[size - 1];  uint bd2 = (uint)(BASEul / 2);
+                while (dn < bd2) { num++; dn = dn << 1; }
+            }
+            uint cur = 0;uint next = 0;
+            for(int i=0;i<size;i++)
+            {
+                next = value[i] >> 32 - num;
+                value[i] = value[i] << num;
+                value[i] = value[i] | cur;
+                cur = next;
+
+
+            }
+            if (cur != 0)
+            { this.value.Add(cur); size++; }
+            return num;
+        }
+
         public static BigInt MulTry(BigInt u,BigInt v)
         {
             BigInt z = new BigInt(0u); BigInt buf;
@@ -235,67 +265,111 @@ namespace BigIntLibrary
             return res;
         }
 
-        public static BigInt DivUnSign(BigInt u,BigInt v,out BigInt r)
+        public static uint DIV_3_BY_2(BigInt u,BigInt d)
         {
-            //Init
-            int n = v.value.Count;
-            int m = u.value.Count;
-            uint[] tempArray = new uint[m + 1];
-            tempArray[m] = 1;
-            BigInt q = new BigInt(); q.value = tempArray.ToList();
-            //Нормализация
-            uint d = (uint)(BASEul / v.value[n - 1] + 1);
-            u = BigInt.Mul(u, new BigInt(d));
-            v = BigInt.Mul(v, new BigInt(d));
-            if(u.value.Count==n+m)
+            d = d.Clone() as BigInt;
+            u = u.Clone() as BigInt;
+            u.Normalize(d.Normalize());
+            if (u.size != 3 || d.size != 2)
+                throw new Exception("Не 3 и 2");
+            ulong U = glue(u.value[2], u.value[1]);
+            ulong D = glue(d.value[1], d.value[0]);
+            ulong Q = U / d.value[1];
+            uint r0, r1, q;
+            ulong R;
+            if(u.value[2]==d.value[1])
             {
-                u.value.Add(0u);
-            }
-            int j = m;
-            while(j>=0)
-            {
-                ulong cur = (ulong)(u.value[j + n]) * (ulong)(BASEul) + u.value[j + n - 1];
-                uint tempq = (uint)(cur / v.value[n - 1]);
-                uint tempr = (uint)(cur % v.value[n - 1]);
-                do
+                uint s1 = d.value[0] - u.value[1];
+                ulong S = ((ulong)s1 << 32) - u.value[0];
+                if(S <= D)
                 {
-                    if (tempq == BASEul || (ulong)tempq * (ulong)v.value[n - 2] > BASEul * (ulong)tempr + u.value[j + n - 2])
-                    {
-                        tempq--;
-                        tempr += v.value[n - 1];
-                    }
-                    else
-                    {
-                        break;
-                    }
+                    q = uint.MaxValue;
+                    R = D - S;
+                    r1 = (uint)(R >> 32);
+                    r0 = (uint)(R);
                 }
-                while (tempr < BASEul);
-                BigInt u2 = new BigInt();u2.value = u.value.GetRange(j, n + 1);
-                u2 = u2 - BigInt.Mul(v, new BigInt(tempq));
-                //
-
-                //
-                for(int h = j; h < j + n; h++)
+                else
                 {
-                    if(h-j>=u2.value.Count)
-                    {
-                        u.value[h] = 0;
-                    }
-                    else
-                    {
-                        u.value[h] = u2.value[h - j];
-                    }
+                    q = uint.MaxValue-1;
+                    R = 2*D - S;
+                    r1 = (uint)(R >> 32);
+                    r0 = (uint)(R);
                 }
-                j--;
-                q.Norm();
-                r = new BigInt();
-                r.value = u.value.GetRange(0, n);
-                r = BigInt.DivN_1(r, d, out uint _R);
                 return q;
-
             }
-
+            ulong DQ = Q * d.value[0];
+            R = ((U - Q * d.value[1]) << 32) | u.value[0];
+            if(R < DQ)
+            {
+                --Q; R += D;
+                if(R >=D && R < DQ)
+                {
+                    --Q; R += D;
+                }
+            }
+            R -= DQ;
+            r1 = (uint)R >> 32;
+            r0 = (uint)R;
+            q = (uint)Q;
+            return q;
         }
+
+        public static BigInt DIV_M_BY_N(BigInt U,BigInt D,out BigInt r)
+        {
+            U = U.Clone() as BigInt; D = D.Clone() as BigInt;
+            U.Normalize(D.Normalize());
+            int m = U.size; int n = D.size;
+            if (U < D) { r = D - U; return new BigInt(); }
+            int k = U.size - D.size;
+            List<uint> q = new List<uint>();
+            for (int i = 0; i < k + 1; i++) q.Add(0u);
+            BigInt Q = new BigInt();
+            Q.value = q; Q.size = k + 1;
+            if (U >= D.GetShift(k))
+            {
+                q[k] = 1;
+                U = U - D.GetShift(k);
+            }
+            else q[k] = 0;
+            while(k>0)
+            {
+                k--;
+                if (glue(U.value[n + k], U.value[n + k - 1]) == glue(D.value[n - 1], D.value[n - 2]))
+                    q[k] = uint.MaxValue;
+                else
+                    q[k] = DIV_3_BY_2(Bigglue(U.value[n + k], U.value[n + k - 1], U.value[n + k - 2]), Bigglue(D.value[n - 1], D.value[n - 2]));
+                U = U - BigInt.Mul(Q , D.GetShift(k));
+                if (U.sign)
+                {
+                    U = U + D;
+                    q[k] = q[k] - 1;
+                }
+            }
+            r = U;
+            return Q;
+        }
+
+        static ulong glue(uint a,uint b)
+        {
+            return ((ulong)a << 32) | b;
+        }
+
+        static BigInt Bigglue(uint a,uint b)
+        {
+            BigInt d = new BigInt();
+            d.value = new List<uint>() { a, b };
+            d.size = 2;
+            return d;
+        }
+
+        static BigInt Bigglue (uint a,uint b,uint c)
+        {
+            BigInt d = new BigInt();
+            d.value = new List<uint>() { a, b ,c};
+            d.size = 3;
+            return d;
+        }
+       
         #endregion
 
         #region Сравнение итд
@@ -484,12 +558,14 @@ namespace BigIntLibrary
 
         private void Norm()
         {
-            if (value.Count == 1)
+            if (value.Count <= 1)
                 return;
-            while(value[value.Count - 1] == 0)
+            while(value[value.Count - 1] == 0 )
             {
                 value.RemoveAt(value.Count - 1);
                 size--;
+                if (value.Count == 1)
+                    return;
             }
           
         }

@@ -15,48 +15,100 @@ namespace BigIntConsoleTest
         {
             
             WindowWidth = 105;
-            DiVN1Test();
+
+            DIV32Test();
+
+            ReadKey();
+           
         }
 
-        public static void DiVN1Test()
+        static string Bits(uint a)
         {
-            Clear();
+            string res = "";
+            for (int i = 31; i >= 0; i--)
+            {
+                if ((i + 1) % 4 == 0)
+                    res += " ";
+                res += (a >> i) % 2;
+            }
+            return res;
+        }
+
+        public static void Divtest()
+        {
+            for (int i = 0; i < 10000; i++)
+            {
+                Clear();
+                WriteLine(i);
+                bool Error = false;
+                string s1 = GenerateNum(rnd.Next(300, 500), false);
+                string s2 = GenerateNum(rnd.Next(120, 250), false);
+                BigInt a1 = BigInt.Parse(s1);
+                BigInt b1 = BigInt.Parse(s2);
+                BigInteger a2 = BigInteger.Parse(s1);
+                BigInteger b2 = BigInteger.Parse(s2);
+                BigInt p1 = BigInt.DIV_M_BY_N(a1, b1, out BigInt r1);
+                BigInteger p2 = a2 / b2;
+                if (p1.ToString() != p2.ToString())
+                    Error = true;
+                if (Error)
+                {
+                    WriteLine($"a = {s1}");
+                    WriteLine($"b = {s2}\n");
+                    WriteLine($"BigInt a = {a1}");
+                    WriteLine($"BigInt b = {b1}\n");
+                    WriteLine($"   Int a = {a2}");
+                    WriteLine($"   Int b = {b2}\n");
+                    WriteLine($"BigInt div = {p1}");
+                    WriteLine($"   Int div = {p2}\n");
+                    ReadKey();
+                    BigInt p;
+
+                    ReadKey();
+
+                }
+
+            }
+
+            ReadKey();
+        }
+
+        public static void DIV32Test()
+        {
             for (int i = 0; i < 100000; i++)
             {
+                Clear();
                 WriteLine(i);
-                string s1 = GenerateNum(rnd.Next(11,27 ), false);
-
-                BigInt a1 = BigInt.Parse(s1);
-                BigInteger a2 = BigInteger.Parse(s1);
-                uint b = (uint)rnd.Next(int.MinValue, int.MaxValue);
-                
-                //
-                
                 bool Error = false;
-                BigInt c1 = BigInt.DivN_1(a1, b,out uint r1);
-                BigInteger c2 = BigInteger.DivRem(a2, new BigInteger(b), out BigInteger r2);
-                if (c1.ToString() != c2.ToString())
-                    Error = true;
-                if (r1.ToString() != r2.ToString())
-                    Error = true;
-                if(Error)
+                string s1 = GenerateNum(rnd.Next(21,21 ), false);
+                string s2 = GenerateNum(rnd.Next(13, 13), false);
+                BigInt a1 = BigInt.Parse(s1);
+                
+                BigInt b1 = BigInt.Parse(s2);
+                //b1.value[1] = b1.value[1] | 2147483648u;
+               
+                BigInteger a2 = BigInteger.Parse(s1);
+                BigInteger b2 = BigInteger.Parse(b1.ToString());
+                uint p1 = BigInt.DIV_3_BY_2(a1, b1);
+                BigInteger p2 = a2 / b2;
+                if (p1.ToString() != p2.ToString())
                 {
-                    WriteLine($"a1 = {a1}");
-                    WriteLine($"a2 = {a2}");
-                    WriteLine($"b  = {b}");
-                    WriteLine($"b  = {b}");
-                    WriteLine($"c1 = {c1}");
-                    WriteLine($"c2 = {c2}");
-                    WriteLine($"r1 = {r1}");
-                    WriteLine($"r2 = {r2}");
+                    WriteLine($"a = {s1}");
+                    WriteLine($"b = {s2}\n");
+                    WriteLine($"BigInt a = {a1}");
+                    WriteLine($"BigInt b = {b1}\n");
+                    WriteLine($"   Int a = {a2}");
+                    WriteLine($"   Int b = {b2}\n");
+                    WriteLine($"BigInt mul = {p1}");
+                    WriteLine($"   Int mul = {p2}\n");
                     ReadKey();
-                    BigInt temp =  BigInt.Parse(c2.ToString());
-                    c1 = BigInt.DivN_1(a1, b,out r1);
+                    uint p = BigInt.DIV_3_BY_2(a1, b1);
                     ReadKey();
                 }
             }
             
         }
+      
 
         public static void MULN1Test()
         {
@@ -250,7 +302,8 @@ namespace BigIntConsoleTest
             if(WithNeg)
                 if (rnd.Next(0, 2) == 1)
                     s.Append('-');
-            for (int i = 0; i < Length; i++)
+            s.Append(chars[rnd.Next(1, 10)]);
+            for (int i = 0; i < Length-1; i++)
             {
                 s.Append(chars[rnd.Next(0, 10)]);
             }
