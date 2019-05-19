@@ -6,20 +6,118 @@ using System.Threading.Tasks;
 using BigIntLibrary;
 using static System.Console;
 using System.Numerics;
-
+using System.Threading;
+using System.Threading.Tasks;
 namespace BigIntConsoleTest
 {
     class Program
     {
+        static int[] index = new int[4];
         static void Main(string[] args)
         {
             
-            WindowWidth = 105;
+            WindowWidth = 200;
 
-            DIV32Test();
-
+            Thread t0 = new Thread(FullTest);
+            Thread t1 = new Thread(FullTest);
+            Thread t2 = new Thread(FullTest); 
+            Thread t3 = new Thread(FullTest);
+            t0.Start(0); t1.Start(1);
+            t2.Start(2); t3.Start(3);
+            while (index[0]<100000 && index[1] < 100000 && index[2] < 100000 && index[3] < 100000)
+            {
+                Thread.Sleep(3000);
+                Clear();
+                WriteLine(index[0]);
+                WriteLine(index[1]);
+                WriteLine(index[2]);
+                WriteLine(index[3]);
+            }
             ReadKey();
            
+        }
+
+
+        public static void FullTest(object ind)
+        {
+            int inde = (int)ind;
+            for (int i = 0; i < 100000; i++)
+            {
+                index[inde] = i;
+                //Clear();
+                //WriteLine(i);
+                bool Error = false;
+                string s1 = GenerateNum(rnd.Next(1, 800), true);
+                string s2 = GenerateNum(rnd.Next(1, 800), true);
+                BigInt a1 = BigInt.Parse(s1);
+                BigInt b1 = BigInt.Parse(s2);
+                BigInteger a2 = BigInteger.Parse(s1);
+                BigInteger b2 = BigInteger.Parse(s2);
+                BigInt plus1 = a1 + b1;
+                BigInteger plus2 = a2 + b2;
+                BigInt minus1 = a1 - b1;
+                BigInteger minus2 = a2 - b2;
+                BigInt mul1 = a1 * b1;
+                BigInteger mul2 = a2 * b2;
+                BigInt div1 = a1 / b1;
+                BigInteger div2 = a2 / b2;
+                if (plus1.ToString() != plus2.ToString())
+                    Error = true;
+                if (minus1.ToString() != minus2.ToString())
+                    Error = true;
+                if (mul1.ToString() != mul2.ToString())
+                    Error = true;
+                if (div1.ToString() != div2.ToString())
+                    Error = true;
+                if(Error)
+                {
+                    i = -1;
+                    break;
+                }
+            }
+        }
+
+        public static void HandTest()
+        {
+            char oper = ReadLine()[0];
+            string s1 = ReadLine();
+            string s2 = ReadLine();
+            BigInt a = BigInt.Parse(s1);
+            BigInt b = BigInt.Parse(s2);
+            BigInteger a2= BigInteger.Parse(s1);
+            BigInteger b2 = BigInteger.Parse(s2);
+            BigInt c = new BigInt();
+            BigInteger c2 = new BigInteger();
+            switch(oper)
+            {
+                case '+':
+                    c = a + b;
+                    c2 = a2 + b2;
+                    break;
+                case '-':
+                    c = a - b;
+                    c2 = a2 - b2;
+                    break;
+                case '/':
+                    c = a / b;
+                    c2 = a2 / b2;
+                    break;
+                case '*':
+                    c = a * b;
+                    c2 = a2 * b2;
+                    break;
+                default:
+                    break;
+            }
+            if (c.ToString() != c2.ToString())
+            {
+                Clear();
+                WriteLine("c1=" + c);
+                WriteLine("c2=" + c2);
+                ReadKey();
+            }
+
+
         }
 
         static string Bits(uint a)
@@ -36,18 +134,24 @@ namespace BigIntConsoleTest
 
         public static void Divtest()
         {
-            for (int i = 0; i < 10000; i++)
+            for (int i = 0; i < 1000000; i++)
             {
                 Clear();
                 WriteLine(i);
                 bool Error = false;
-                string s1 = GenerateNum(rnd.Next(300, 500), false);
-                string s2 = GenerateNum(rnd.Next(120, 250), false);
+                string s1 = GenerateNum(rnd.Next(300, 500), true);
+                string s2 = GenerateNum(rnd.Next(2, 25), true);
                 BigInt a1 = BigInt.Parse(s1);
                 BigInt b1 = BigInt.Parse(s2);
                 BigInteger a2 = BigInteger.Parse(s1);
                 BigInteger b2 = BigInteger.Parse(s2);
-                BigInt p1 = BigInt.DIV_M_BY_N(a1, b1, out BigInt r1);
+                //
+                BigInt an = a1.Clone() as BigInt;
+                BigInt bn = b1.Clone() as BigInt;
+                
+                BigInteger c = BigInteger.Parse(an.ToString()) / BigInteger.Parse(bn.ToString());
+                BigInt p1 = a1 / b1;
+                //
                 BigInteger p2 = a2 / b2;
                 if (p1.ToString() != p2.ToString())
                     Error = true;
@@ -62,8 +166,8 @@ namespace BigIntConsoleTest
                     WriteLine($"BigInt div = {p1}");
                     WriteLine($"   Int div = {p2}\n");
                     ReadKey();
-                    BigInt p;
-
+                    LIMBSCOMPARE(p1, p2);
+                    //BigInt.Div(a1, b1);
                     ReadKey();
 
                 }
@@ -73,85 +177,38 @@ namespace BigIntConsoleTest
             ReadKey();
         }
 
-        public static void DIV32Test()
+        public static void LIMBSCOMPARE(BigInt a,BigInteger bb)
         {
-            for (int i = 0; i < 100000; i++)
+            BigInt b = BigInt.Parse(bb.ToString());
+            Clear();
+            //WriteLine();
+            //WriteLine(a + "\n");
+            //WriteLine(bb);
+            //WriteLine(b);
+            int i = 0;
+            for (i = 0; i < a.size & i< b.size; i++)
             {
-                Clear();
-                WriteLine(i);
-                bool Error = false;
-                string s1 = GenerateNum(rnd.Next(21,21 ), false);
-                string s2 = GenerateNum(rnd.Next(13, 13), false);
-                BigInt a1 = BigInt.Parse(s1);
-                
-                BigInt b1 = BigInt.Parse(s2);
-                //b1.value[1] = b1.value[1] | 2147483648u;
-               
-                BigInteger a2 = BigInteger.Parse(s1);
-                BigInteger b2 = BigInteger.Parse(b1.ToString());
-                uint p1 = BigInt.DIV_3_BY_2(a1, b1);
-                BigInteger p2 = a2 / b2;
-                if (p1.ToString() != p2.ToString())
-                {
-                    WriteLine($"a = {s1}");
-                    WriteLine($"b = {s2}\n");
-                    WriteLine($"BigInt a = {a1}");
-                    WriteLine($"BigInt b = {b1}\n");
-                    WriteLine($"   Int a = {a2}");
-                    WriteLine($"   Int b = {b2}\n");
-                    WriteLine($"BigInt mul = {p1}");
-                    WriteLine($"   Int mul = {p2}\n");
-                    ReadKey();
-                    uint p = BigInt.DIV_3_BY_2(a1, b1);
-                    ReadKey();
-                }
+                WriteLine(a.value[i] + "\t" + b.value[i]);
             }
-            
+            while(i<a.size)
+                WriteLine(a.value[i++]);
+            while (i < b.size)
+                WriteLine("\t" + b.value[i++]);
+            WriteLine();
+            WriteLine(a.size);
+            WriteLine(b.size);
         }
+
+       
+            
+        
+
+      
       
 
-        public static void MULN1Test()
-        {
-            for (int i = 0; i < 1000; i++)
-            {
-                
-                //WriteLine(i);
-                //bool Error = false;
-                string s1 = GenerateNum(rnd.Next(11, 27), false);
+       
 
-                BigInt a1 = BigInt.Parse(s1);
-                BigInteger a2 = BigInteger.Parse(s1);
-                uint b = (uint)rnd.Next(int.MinValue, int.MaxValue);
-                BigInt c1;
-                //
-                uint s = BigInt.MulN1(a1, b, out c1);
-                WriteLine(s);
-                WriteLine(c1);
-                //
-                c1.size++;
-                c1.value.Add(s);
-                WriteLine(c1);
-                //
-                WriteLine(a2 * b);
-                ReadKey();
-            }
-            
-            
-          
-        }
-
-        public static void MUL_TEST_2()
-        {
-            BigInteger a = BigInteger.Pow(10, 77);
-            BigInteger b = BigInteger.Pow(2, 63);
-            BigInt a1 = BigInt.Parse(a.ToString());
-            BigInt b1 = BigInt.Parse(b.ToString());
-            BigInt c1 = BigInt.Mul(a1, b1);
-            BigInteger c = a * b;
-            WriteLine(c1);
-            WriteLine(c);
-            ReadKey();
-        }
+    
 
         public static void MUL_TEST()
         {
@@ -161,13 +218,13 @@ namespace BigIntConsoleTest
                 Clear();
                 WriteLine(i);
                 bool Error = false;
-                string s1 = GenerateNum(rnd.Next(120, 500),false);
-                string s2 = GenerateNum(rnd.Next(120, 500),false);
+                string s1 = GenerateNum(rnd.Next(120, 500),true);
+                string s2 = GenerateNum(rnd.Next(120, 500), true);
                 BigInt a1 = BigInt.Parse(s1);
                 BigInt b1 = BigInt.Parse(s2);
                 BigInteger a2 = BigInteger.Parse(s1);
                 BigInteger b2 = BigInteger.Parse(s2);
-                BigInt p1 = BigInt.MulTry(a1, b1);
+                BigInt p1 = a1 * b1;
                 BigInteger p2 = a2 * b2;
                 if (p1.ToString() != p2.ToString())
                     Error = true;
@@ -182,7 +239,6 @@ namespace BigIntConsoleTest
                     WriteLine($"BigInt mul = {p1}");
                     WriteLine($"   Int mul = {p2}\n");
                     ReadKey();
-                    BigInt p;
                     
                     ReadKey();
                     
@@ -246,15 +302,7 @@ namespace BigIntConsoleTest
             }
         }
 
-        static void MulFix()
-        {
-            BigInt a = new BigInt();
-            a = BigInt.Parse("4294967296");
-            WriteLine(a.DebugString());
-            a = BigInt.Mul(a, a);
-            WriteLine(a);
-            ReadKey();
-        }
+       
 
         static void Test()
         {

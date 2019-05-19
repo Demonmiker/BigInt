@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static System.Math;
+using System.Numerics;
+
 
 namespace BigIntLibrary
 {
@@ -136,8 +138,8 @@ namespace BigIntLibrary
 
         #region Умножение
 
-        //УБРАТЬ PUBLIC
-        public static uint MulN1(BigInt u, uint v, out BigInt z, ulong s = 0ul)
+        
+        private static uint MulN1(BigInt u, uint v, out BigInt z, ulong s = 0ul)
         {
             z = new BigInt();
             z.Resize(u.size);
@@ -150,7 +152,7 @@ namespace BigIntLibrary
             return (uint)s;
         }
 
-        void Shift(int a)
+        private void Shift(int a)
         {
             for (int i = 0; i < a; i++)
             {
@@ -159,37 +161,14 @@ namespace BigIntLibrary
             } 
         }
 
-        BigInt GetShift(int a)
+        private BigInt GetShift(int a)
         {
             BigInt b = this.Clone() as BigInt;
             b.Shift(a);
             return b;
         }
-
-        public int Normalize(int num=-1)
-        {
-            if(num==-1)
-            {
-                num = 0;
-                uint dn = this.value[size - 1];  uint bd2 = (uint)(BASEul / 2);
-                while (dn < bd2) { num++; dn = dn << 1; }
-            }
-            uint cur = 0;uint next = 0;
-            for(int i=0;i<size;i++)
-            {
-                next = value[i] >> 32 - num;
-                value[i] = value[i] << num;
-                value[i] = value[i] | cur;
-                cur = next;
-
-
-            }
-            if (cur != 0)
-            { this.value.Add(cur); size++; }
-            return num;
-        }
-
-        public static BigInt MulTry(BigInt u,BigInt v)
+      
+        private static BigInt MulTry(BigInt u,BigInt v)
         {
             BigInt z = new BigInt(0u); BigInt buf;
             for (int i = 0; i < v.size; i++)
@@ -202,7 +181,8 @@ namespace BigIntLibrary
             return z;
         }
 
-        public static uint Mul_MN(BigInt u, BigInt v, out BigInt z)
+        //неработает
+        private static uint Mul_MN(BigInt u, BigInt v, out BigInt z)
         {
             uint s = BigInt.MulN1(u, v.value[0], out z);
             BigInt buf;
@@ -216,7 +196,6 @@ namespace BigIntLibrary
             return s;
         }
 
-
         public static BigInt Mul(BigInt u, BigInt v)
         {
             u = u.Clone() as BigInt;
@@ -226,18 +205,23 @@ namespace BigIntLibrary
             return MulTry(u, v);
         }
 
-
+        public static BigInt operator * (BigInt a,BigInt b)
+        {
+            BigInt res = BigInt.MulTry(a, b);
+            res.sign = a.sign ^ b.sign;
+            return res;
+        }
         #endregion
 
         #region Деление
-        public static long ModulusOnShort(BigInt a, uint b)
+        private static long ModulusOnShort(BigInt a, uint b)
         {
             if (a.size == 1 && a.value[0] == 0)
                 return -1;
             long carry = 0;
             for (int i = (int)a.size - 1; i >= 0; --i)
             {
-                long cur = a.value[i] + carry * (uint.MaxValue + 1l);
+                long cur = a.value[i] + carry * (uint.MaxValue + 1L);
                 a.value[i] = (uint)(cur / b);
                 carry = (long)(cur % b);
             }
@@ -247,9 +231,9 @@ namespace BigIntLibrary
             return carry;
         }
 
-
-        public static BigInt DivN_1(BigInt u,uint v,out uint r)
+        private static BigInt DivN_1(BigInt u,uint v,out uint r)
         {
+            u = u.Clone() as BigInt;
             uint[] ans = new uint[u.value.Count];
             r = 0;
             int j = u.value.Count - 1;
@@ -265,13 +249,15 @@ namespace BigIntLibrary
             return res;
         }
 
-        public static uint DIV_3_BY_2(BigInt u,BigInt d)
-        {
-            d = d.Clone() as BigInt;
-            u = u.Clone() as BigInt;
-            u.Normalize(d.Normalize());
+        private static uint DIV_3_BY_2(BigInt u,BigInt d)
+        { 
+            
+            //
             if (u.size != 3 || d.size != 2)
                 throw new Exception("Не 3 и 2");
+            if ((d.value[1] >> 31) != 1)
+                throw new Exception("Не норма");
+            //
             ulong U = glue(u.value[2], u.value[1]);
             ulong D = glue(d.value[1], d.value[0]);
             ulong Q = U / d.value[1];
@@ -308,19 +294,72 @@ namespace BigIntLibrary
                 }
             }
             R -= DQ;
-            r1 = (uint)R >> 32;
-            r0 = (uint)R;
+            r1 = (uint)(R >> 32);
+            r0 = (uint)(R);
             q = (uint)Q;
             return q;
         }
 
-        public static BigInt DIV_M_BY_N(BigInt U,BigInt D,out BigInt r)
+        public static BigInt operator / (BigInt a, BigInt b)
         {
-            U = U.Clone() as BigInt; D = D.Clone() as BigInt;
-            U.Normalize(D.Normalize());
+            if (b == new BigInt())
+                throw new Exception("деление на ноль");
+            if (a < b)
+                return new BigInt();
+            BigInt res;
+            if((b.size)==1)
+            {
+                res = BigInt.DivN_1(a, b.value[0], out uint r);
+                res.sign = a.sign ^ b.sign;
+            }
+            else
+            {
+                res = BigInt.Div(a, b);
+                res.sign = a.sign ^ b.sign;
+            }
+            return res;
+        }
+
+        private static BigInt Div(BigInt a,BigInt b)
+        {
+            BigInt v = b.Clone() as BigInt;v.sign = false;
+            BigInt u = a.Clone() as BigInt;u.sign = false;
+            u.Normalize(v.Normalize());
+            return DIV_M_BY_N(u, v, out BigInt r);
+
+        }
+
+        private int Normalize(int num = -1)
+        {
+            if (num == -1)
+            {
+                num = 0;
+                uint dn = this.value[size - 1]; uint bd2 = (uint)(BASEul / 2);
+                while (dn < bd2) { num++; dn = dn << 1; }
+            }
+            if (num == 0)
+                return 0;
+            uint cur = 0; uint next = 0;
+            for (int i = 0; i < size; i++)
+            {
+                next = value[i] >> 32 - num;
+                value[i] = value[i] << num;
+                value[i] = value[i] | cur;
+                cur = next;
+
+
+            }
+            if (cur != 0)
+            { this.value.Add(cur); size++; }
+            return num;
+        }
+
+        private static BigInt DIV_M_BY_N(BigInt U,BigInt D,out BigInt r)
+        {
+           
             int m = U.size; int n = D.size;
-            if (U < D) { r = D - U; return new BigInt(); }
-            int k = U.size - D.size;
+            if (U < D) { r = D - U; return new BigInt(); }//
+            int k = m - n;
             List<uint> q = new List<uint>();
             for (int i = 0; i < k + 1; i++) q.Add(0u);
             BigInt Q = new BigInt();
@@ -330,15 +369,28 @@ namespace BigIntLibrary
                 q[k] = 1;
                 U = U - D.GetShift(k);
             }
-            else q[k] = 0;
+            else { q.RemoveAt(q.Count - 1); Q.size--; }
             while(k>0)
             {
-                k--;
+                k = k - 1;
                 if (glue(U.value[n + k], U.value[n + k - 1]) == glue(D.value[n - 1], D.value[n - 2]))
                     q[k] = uint.MaxValue;
                 else
-                    q[k] = DIV_3_BY_2(Bigglue(U.value[n + k], U.value[n + k - 1], U.value[n + k - 2]), Bigglue(D.value[n - 1], D.value[n - 2]));
-                U = U - BigInt.Mul(Q , D.GetShift(k));
+                {
+                    // H / L
+                    BigInt H = Bigglue(U.value[n + k], U.value[n + k - 1], U.value[n + k - 2]);
+                    BigInt L = Bigglue(D.value[n - 1], D.value[n - 2]);
+                    //H.Normalize(L.Normalize());
+                     q[k] = DIV_3_BY_2(H,L);
+                }
+                // Проверка
+                BigInteger uu = BigInteger.Parse(U.ToString());
+                BigInteger qq = BigInteger.Parse(q[k].ToString());
+                BigInteger dd = BigInteger.Parse(D.GetShift(k).ToString());
+                uu = uu - (qq * dd);
+                //
+
+                U = U - BigInt.Mul(new BigInt(q[k]), D.GetShift(k));
                 if (U.sign)
                 {
                     U = U + D;
@@ -357,12 +409,12 @@ namespace BigIntLibrary
         static BigInt Bigglue(uint a,uint b)
         {
             BigInt d = new BigInt();
-            d.value = new List<uint>() { a, b };
+            d.value = new List<uint>() { b, a };
             d.size = 2;
             return d;
         }
 
-        static BigInt Bigglue (uint a,uint b,uint c)
+        static BigInt Bigglue (uint c,uint b,uint a)
         {
             BigInt d = new BigInt();
             d.value = new List<uint>() { a, b ,c};
@@ -451,7 +503,7 @@ namespace BigIntLibrary
                 return "0";
         }
 
-        public string DebugString()
+        private string DebugString()
         {
             string res = size + "; ";
             for (int i = size - 1; i > -1; i--)
@@ -510,8 +562,6 @@ namespace BigIntLibrary
 
         }
 
-
-
         public void Set(uint num)
         {
             size = 1;
@@ -520,7 +570,7 @@ namespace BigIntLibrary
 
         public void Set(string num)
         {
-
+            
         }
 
 
@@ -529,7 +579,7 @@ namespace BigIntLibrary
         #endregion
 
         #region Другое
-        public static void Swap<T>(ref T a, ref T b)
+        static void Swap<T>(ref T a, ref T b)
         {
             T buf = a;
             a = b;
