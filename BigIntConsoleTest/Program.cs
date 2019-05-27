@@ -12,7 +12,7 @@ namespace BigIntConsoleTest
 {
     class Program
     {
-        static int[] index = new int[4];
+       
         static void Main(string[] args)
         {
             
@@ -35,6 +35,23 @@ namespace BigIntConsoleTest
             }
             ReadKey();
            
+        }
+
+        static int[] index = new int[4];
+        public static void ThreadsTest()
+        {
+            Thread t0 = new Thread(FullTest);
+            Thread t1 = new Thread(FullTest);
+            Thread t2 = new Thread(FullTest);
+            Thread t3 = new Thread(FullTest);
+            t0.Start(0); t1.Start(1);
+            t2.Start(2); t3.Start(3);
+            while (index[0] < 100000 && index[1] < 100000 && index[2] < 100000 && index[3] < 100000)
+            {
+                Thread.Sleep(3000);
+                Clear();
+               
+            }
         }
 
 
@@ -132,72 +149,9 @@ namespace BigIntConsoleTest
             return res;
         }
 
-        public static void Divtest()
-        {
-            for (int i = 0; i < 1000000; i++)
-            {
-                Clear();
-                WriteLine(i);
-                bool Error = false;
-                string s1 = GenerateNum(rnd.Next(300, 500), true);
-                string s2 = GenerateNum(rnd.Next(2, 25), true);
-                BigInt a1 = BigInt.Parse(s1);
-                BigInt b1 = BigInt.Parse(s2);
-                BigInteger a2 = BigInteger.Parse(s1);
-                BigInteger b2 = BigInteger.Parse(s2);
-                //
-                BigInt an = a1.Clone() as BigInt;
-                BigInt bn = b1.Clone() as BigInt;
-                
-                BigInteger c = BigInteger.Parse(an.ToString()) / BigInteger.Parse(bn.ToString());
-                BigInt p1 = a1 / b1;
-                //
-                BigInteger p2 = a2 / b2;
-                if (p1.ToString() != p2.ToString())
-                    Error = true;
-                if (Error)
-                {
-                    WriteLine($"a = {s1}");
-                    WriteLine($"b = {s2}\n");
-                    WriteLine($"BigInt a = {a1}");
-                    WriteLine($"BigInt b = {b1}\n");
-                    WriteLine($"   Int a = {a2}");
-                    WriteLine($"   Int b = {b2}\n");
-                    WriteLine($"BigInt div = {p1}");
-                    WriteLine($"   Int div = {p2}\n");
-                    ReadKey();
-                    LIMBSCOMPARE(p1, p2);
-                    //BigInt.Div(a1, b1);
-                    ReadKey();
+    
 
-                }
-
-            }
-
-            ReadKey();
-        }
-
-        public static void LIMBSCOMPARE(BigInt a,BigInteger bb)
-        {
-            BigInt b = BigInt.Parse(bb.ToString());
-            Clear();
-            //WriteLine();
-            //WriteLine(a + "\n");
-            //WriteLine(bb);
-            //WriteLine(b);
-            int i = 0;
-            for (i = 0; i < a.size & i< b.size; i++)
-            {
-                WriteLine(a.value[i] + "\t" + b.value[i]);
-            }
-            while(i<a.size)
-                WriteLine(a.value[i++]);
-            while (i < b.size)
-                WriteLine("\t" + b.value[i++]);
-            WriteLine();
-            WriteLine(a.size);
-            WriteLine(b.size);
-        }
+       
 
        
             
@@ -304,43 +258,7 @@ namespace BigIntConsoleTest
 
        
 
-        static void Test()
-        {
-            for (int i = 0; i < 10000; i++)
-            {
-
-                WriteLine(i);
-                string s = ReadLine();
-                BigInteger b = BigInteger.Parse(s);
-                string n = b.ToString();
-                BigInt v = BigInt.Parse(s);
-                string m = v.ToString();
-
-
-                string q = ReadLine();
-                BigInteger d = BigInteger.Parse(q);
-                string f = d.ToString();
-                BigInt g = BigInt.Parse(q);
-                string h = g.ToString();
-
-                BigInt O = new BigInt();
-                O = BigInt.Mul(v, g);
-
-                BigInteger P = new BigInteger();
-                P = b * d;
-
-                if (O.ToString() != P.ToString())
-                {
-                    WriteLine(O);
-                    WriteLine(P);
-                    ReadKey();
-
-                }
-
-            }
-            ReadKey();
-
-        }
+     
 
         static Random rnd = new Random();
         static string chars = "0123456789"; 

@@ -9,23 +9,40 @@ using System.Numerics;
 
 namespace BigIntLibrary
 {
+    /// <summary>
+    /// класс реализующий длинную арифметику
+    /// </summary>
     public class BigInt : IComparable<BigInt>, ICloneable
     {
         #region Структура
-        public int size;
 
-        bool sign = false;
+        int size;
 
-        static BigInt BASE;
+        /// <summary>
+        /// знак числа true если негативное
+        /// </summary>
+        public bool sign { get; protected set; } = false;
 
+        /// <summary>
+        /// система счисления
+        /// </summary>
+        public readonly static BigInt BASE;
+
+        /// <summary>
+        /// система счисления
+        /// </summary>
         static ulong BASEul;
 
-        public List<uint> value = new List<uint>(); // значения (лимбы)
+        /// <summary>
+        /// структура где хранится числа
+        /// </summary>
+        List<uint> value = new List<uint>(); // значения (лимбы)
 
         
         #endregion
 
         #region Конструкторы
+        
         static BigInt()
         {
             BASE = new BigInt();
@@ -41,13 +58,35 @@ namespace BigIntLibrary
 
         }
 
+        public BigInt(int num)
+        {
+            size = 1;
+            value[0] = ((uint)Math.Abs(num));
+            sign = (num < 0);
+        }
+
+        public BigInt(long num)
+        {
+
+            ulong snum = (ulong)Math.Abs(num);
+            sign = num < 0;
+            size = 2;
+            value[0] = (uint)(snum);
+            value.Add((uint)(snum >> 32));
+        }
+
+        public BigInt(ulong num)
+        {
+            size = 2;
+            value[0] = ((uint)num);
+            value.Add((uint)(num >> 32));
+        }
+
         public BigInt(uint num)
         {
             value.Add(0u);
             this.Set(num);
         }
-
-       
    
         #endregion
 
@@ -123,11 +162,23 @@ namespace BigIntLibrary
             return c;
         }
 
+        /// <summary>
+        /// операция сложения
+        /// </summary>
+        /// <param name="a">слагаемое</param>
+        /// <param name="b">слагаемое</param>
+        /// <returns>сумма</returns>
         public static BigInt operator +(BigInt a,BigInt b)
         {
             return a.sign == b.sign ? BigInt.SignOp(a, b) : BigInt.DiffSignOp(a, b);
         }
 
+        /// <summary>
+        /// операция отрицания
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static BigInt operator -(BigInt a,BigInt b)
         {
             return a.sign != b.sign ? BigInt.SignOp(a, b) : BigInt.DiffSignOp(a, b);
@@ -138,7 +189,14 @@ namespace BigIntLibrary
 
         #region Умножение
 
-        
+        /// <summary>
+        /// операция умножения BigInt на uint (не используется)
+        /// </summary>
+        /// <param name="u"></param>
+        /// <param name="v"></param>
+        /// <param name="z"></param>
+        /// <param name="s"></param>
+        /// <returns></returns>
         private static uint MulN1(BigInt u, uint v, out BigInt z, ulong s = 0ul)
         {
             z = new BigInt();
@@ -152,6 +210,10 @@ namespace BigIntLibrary
             return (uint)s;
         }
 
+        /// <summary>
+        /// умножение на систему счисления
+        /// </summary>
+        /// <param name="a">количество операций</param>
         private void Shift(int a)
         {
             for (int i = 0; i < a; i++)
@@ -161,6 +223,11 @@ namespace BigIntLibrary
             } 
         }
 
+        /// <summary>
+        /// умножение на систему счисления с выдачей нового BigInt
+        /// </summary>
+        /// <param name="a"></param>
+        /// <returns></returns>
         private BigInt GetShift(int a)
         {
             BigInt b = this.Clone() as BigInt;
@@ -168,6 +235,12 @@ namespace BigIntLibrary
             return b;
         }
       
+        /// <summary>
+        /// оерация умножения
+        /// </summary>
+        /// <param name="u">множитель</param>
+        /// <param name="v">множитель</param>
+        /// <returns>произведение</returns>
         private static BigInt MulTry(BigInt u,BigInt v)
         {
             BigInt z = new BigInt(0u); BigInt buf;
@@ -181,7 +254,13 @@ namespace BigIntLibrary
             return z;
         }
 
-        //неработает
+        /// <summary>
+        /// в теории более быстрая операция умножения (не работает и не используется)
+        /// </summary>
+        /// <param name="u"></param>
+        /// <param name="v"></param>
+        /// <param name="z"></param>
+        /// <returns></returns>
         private static uint Mul_MN(BigInt u, BigInt v, out BigInt z)
         {
             uint s = BigInt.MulN1(u, v.value[0], out z);
@@ -196,7 +275,13 @@ namespace BigIntLibrary
             return s;
         }
 
-        public static BigInt Mul(BigInt u, BigInt v)
+        /// <summary>
+        /// умножение 
+        /// </summary>
+        /// <param name="u"></param>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        static BigInt Mul(BigInt u, BigInt v)
         {
             u = u.Clone() as BigInt;
             v = v.Clone() as BigInt;
@@ -205,6 +290,12 @@ namespace BigIntLibrary
             return MulTry(u, v);
         }
 
+        /// <summary>
+        /// операция умножения
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static BigInt operator * (BigInt a,BigInt b)
         {
             BigInt res = BigInt.MulTry(a, b);
@@ -214,6 +305,12 @@ namespace BigIntLibrary
         #endregion
 
         #region Деление
+        /// <summary>
+        /// операция для преведения к строке (остаток от 10)
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         private static long ModulusOnShort(BigInt a, uint b)
         {
             if (a.size == 1 && a.value[0] == 0)
@@ -231,6 +328,13 @@ namespace BigIntLibrary
             return carry;
         }
 
+        /// <summary>
+        /// деление BigInt на uint
+        /// </summary>
+        /// <param name="u"></param>
+        /// <param name="v"></param>
+        /// <param name="r">остаток</param>
+        /// <returns></returns>
         private static BigInt DivN_1(BigInt u,uint v,out uint r)
         {
             u = u.Clone() as BigInt;
@@ -249,6 +353,12 @@ namespace BigIntLibrary
             return res;
         }
 
+        /// <summary>
+        /// деление 3 лимба на два лимба
+        /// </summary>
+        /// <param name="u"></param>
+        /// <param name="d"></param>
+        /// <returns></returns>
         private static uint DIV_3_BY_2(BigInt u,BigInt d)
         { 
             
@@ -300,6 +410,12 @@ namespace BigIntLibrary
             return q;
         }
 
+        /// <summary>
+        /// операция деление
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static BigInt operator / (BigInt a, BigInt b)
         {
             if (b == new BigInt())
@@ -320,6 +436,12 @@ namespace BigIntLibrary
             return res;
         }
 
+        /// <summary>
+        /// деление
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         private static BigInt Div(BigInt a,BigInt b)
         {
             BigInt v = b.Clone() as BigInt;v.sign = false;
@@ -329,6 +451,11 @@ namespace BigIntLibrary
 
         }
 
+        /// <summary>
+        /// нормализация 
+        /// </summary>
+        /// <param name="num"></param>
+        /// <returns></returns>
         private int Normalize(int num = -1)
         {
             if (num == -1)
@@ -354,6 +481,13 @@ namespace BigIntLibrary
             return num;
         }
 
+        /// <summary>
+        /// операция деление для чисел с размером M и N M>N
+        /// </summary>
+        /// <param name="U"></param>
+        /// <param name="D"></param>
+        /// <param name="r"></param>
+        /// <returns></returns>
         private static BigInt DIV_M_BY_N(BigInt U,BigInt D,out BigInt r)
         {
            
@@ -401,20 +535,37 @@ namespace BigIntLibrary
             return Q;
         }
 
-        static ulong glue(uint a,uint b)
+        /// <summary>
+        /// операция сборки числа из лимбов
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        private static ulong glue(uint a,uint b)
         {
             return ((ulong)a << 32) | b;
         }
-
-        static BigInt Bigglue(uint a,uint b)
+        /// <summary>
+        /// операция сборки числа из лимбов
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        private static BigInt Bigglue(uint a,uint b)
         {
             BigInt d = new BigInt();
             d.value = new List<uint>() { b, a };
             d.size = 2;
             return d;
         }
-
-        static BigInt Bigglue (uint c,uint b,uint a)
+        /// <summary>
+        /// операция сборки числа из лимбов
+        /// </summary>
+        /// <param name="c"></param>
+        /// <param name="b"></param>
+        /// <param name="a"></param>
+        /// <returns></returns>
+        private static BigInt Bigglue (uint c,uint b,uint a)
         {
             BigInt d = new BigInt();
             d.value = new List<uint>() { a, b ,c};
@@ -479,10 +630,13 @@ namespace BigIntLibrary
         #endregion
 
         #region Перевод в другие типы
+
+        /// <summary>
+        /// перевод в строку
+        /// </summary>
+        /// <returns>строчное представление</returns>
         public override string ToString()
         {
-            //return DebugString();
-            //this.Norm();
             BigInt buf = this.Clone() as BigInt;
             StringBuilder sb = new StringBuilder(string.Empty);
             long mod = BigInt.ModulusOnShort(buf, 10);
@@ -503,6 +657,10 @@ namespace BigIntLibrary
                 return "0";
         }
 
+        /// <summary>
+        /// строка для отладки
+        /// </summary>
+        /// <returns></returns>
         private string DebugString()
         {
             string res = size + "; ";
@@ -516,6 +674,11 @@ namespace BigIntLibrary
 
         }
 
+        /// <summary>
+        /// получание числа из строки
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
         public static BigInt Parse(string s)
         {
             BigInt res = new BigInt();
@@ -548,34 +711,38 @@ namespace BigIntLibrary
 
         public void Set(int num)
         {
-            value[0] = (uint)Abs(num);
-          
+            value.Clear();
+            size = 1;
+            value.Add(  (uint)Abs(num));
+            sign = num < 0;
         }
 
         public void Set(long num)
         {
-
+            value.Clear();
+            ulong snum = (ulong)Math.Abs(num);
+            sign = num < 0;
+            size = 2;
+            value.Add((uint)snum);
+            value.Add((uint)(snum >> 32));
         }
 
         public void Set(ulong num)
         {
-
+            value.Clear();
+            size = 2;
+            value.Add((uint)num);
+            value.Add((uint)(num >> 32));
         }
 
         public void Set(uint num)
         {
+            value.Clear();
             size = 1;
-            value[0] = num;
+            value.Add(num);
         }
 
-        public void Set(string num)
-        {
-            
-        }
-
-
-
-
+       
         #endregion
 
         #region Другое
@@ -586,6 +753,10 @@ namespace BigIntLibrary
             b = buf;
         }
 
+        /// <summary>
+        /// выдать клон объекта
+        /// </summary>
+        /// <returns></returns>
         public object Clone()
         {
             BigInt A = new BigInt();
